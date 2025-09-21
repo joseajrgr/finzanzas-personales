@@ -24,6 +24,8 @@ jobs:
         run: flake8 app.py
       - name: Run security checks with bandit
         run: bandit -r app.py
+      - name: Add project root to PYTHONPATH
+        run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
       - name: Run tests
         run: pytest
       - name: Test app startup
