@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ingresos y Gastos</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+<body>
+    {% extends "base.html" %}
+    
+    {% block title %}Dashboard{% endblock %}
+    
+    {% block content %}
+    <div class="container mt-5">
+        <h2 class="text-center">Distribución de Ingresos y Gastos</h2>
+
+        <!-- FORMULARIO -->
+        <div class="card p-3 mb-4">
+            <h4>Agregar Ingreso o Gasto</h4>
+            <div class="form-group">
+                <label>Nombre:</label>
+                <input type="text" id="nombre" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Cantidad (€):</label>
+                <input type="number" id="cantidad" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Tipo:</label>
+                <select id="tipo" class="form-control">
+                    <option value="Ingreso">Ingreso</option>
+                    <option value="Gasto">Gasto</option>
+                </select>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="agregarDato()">Agregar</button>
+            <button class="btn btn-danger btn-block" onclick="limpiarDatos()">Limpiar Todo</button>
+        </div>
+
+        <!-- GRÁFICO -->
+        <div id="sankey_chart" style="width: 100%; height: 500px;"></div>
+    </div>
+
+    <script type="text/javascript">
+        google.charts.load("current", {packages:["sankey"]});
+        google.charts.setOnLoadCallback(drawChart);
+
+        let dataRows = {{ datos | tojson }}; // Cargar datos desde Flask
+
+        function agregarDato() {
+            let nombre = document.getElementById("nombre").value;
+            let cantidad = parseFloat(document.getElementById("cantidad").value);
+            let tipo = document.getElementById("tipo").value;
+
+            if (!nombre || isNaN(cantidad) || cantidad <= 0) {
+                alert("Datos inválidos");
+                return;
+            }
+
+            let nuevoDato = {nombre: nombre, cantidad: cantidad, tipo: tipo};
+
+            fetch('/agregar', {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(nuevoDato)
+            }).then(response => response.json())
+              .then(() => location.reload());
+        }
+
+        function limpiarDatos() {
+            fetch('/limpiar', { method: "POST" })
+                .then(response => response.json())
+                .then(() => location.reload());
+        }
+
+        function drawChart() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Origen');
+            data.addColumn('string', 'Destino');
+            data.addColumn('number', 'Cantidad');
+
+            let ingresos = dataRows.filter(d => d.tipo === "Ingreso");
+            let gastos = dataRows.filter(d => d.tipo === "Gasto");
+
+            let totalIngresos = ingresos.reduce((sum, d) => sum + d.cantidad, 0);
+            let totalGastos = gastos.reduce((sum, d) => sum + d.cantidad, 0);
+            let ahorro = Math.max(totalIngresos - totalGastos, 0);
+
+            ingresos.forEach(d => data.addRow([d.nombre, "Ingreso total", d.cantidad]));
+            gastos.forEach(d => data.addRow(["Gasto total", d.nombre, d.cantidad]));
+
+            
+            data.addRow(["Ingreso total", "Gasto total", totalGastos]);
+            //data.addRow(["Ingreso total", "Ahorro", ahorro]);
+            
+            var options = {
+                width: "100%",
+                sankey: {
+                    node: { label: { fontSize: 14 }, interactivity: false },
+                    link: { colorMode: 'gradient' }
+                    
+                }
+            };
+
+            var chart = new google.visualization.Sankey(document.getElementById('sankey_chart'));
+            chart.draw(data, options);
+        }
+    </script>
+    {% endblock %}
+</body>
+</html>

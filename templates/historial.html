@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Movimientos</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+        {% extends "base.html" %}
+    
+    {% block title %}Historial de Movimientos{% endblock %}
+    
+    {% block content %}
+    <h2 class="text-center">Historial de Movimientos</h2>
+    <ul class="list-group mb-4">
+        {% for movimiento in movimientos %}
+            <li class="list-group-item">{{ movimiento[0] }} - {{ movimiento[1] }}: {{ movimiento[2] }} de {{ movimiento[3] }}€</li>
+        {% endfor %}
+    </ul>
+    {% endblock %}
+</body>
+</html>

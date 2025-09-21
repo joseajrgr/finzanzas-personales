@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    {% extends "base.html" %}
+    
+    {% block title %}Dashboard{% endblock %}
+    
+    {% block content %}
+    <h2 class="text-center">Saldos Actuales</h2>
+    <h3 class="text-center">Total: {{ total_saldo }}€</h3>
+    
+    {% for tipo, cuentas in cuentas_por_tipo.items() %}
+        <h4>{{ tipo }}</h4>
+        <div class="row">
+            {% for cuenta in cuentas %}
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ cuenta[0] }}</h5>
+                            <p class="card-text">{{ cuenta[1] }}€</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+    
+    <div class="row">
+        <div class="col-md-6">
+            <canvas id="pieChart" width="400" height="400"></canvas>
+        </div>
+       
+        <div class="col-md-6">
+            <canvas id="stackedBarChart" width="600" height="400"></canvas>
+        </div>
+        
+    </div>
+    <script>
+        const fechas = {{ datos_csv["fechas"] | tojson }};
+    const cuentas = {{ datos_csv["cuentas"] | tojson }};
+    const saldos = {{ datos_csv["saldos"] | tojson }};
+
+    const colores = [
+        'rgba(54, 162, 235, 0.7)',  // Azul
+        'rgba(255, 99, 132, 0.7)',  // Rojo
+        'rgba(75, 192, 192, 0.7)',  // Verde
+        'rgba(255, 205, 86, 0.7)',  // Amarillo
+        'rgba(153, 102, 255, 0.7)', // Morado
+        'rgba(255, 159, 64, 0.7)',  // Naranja
+        'rgba(201, 203, 207, 0.7)', // Gris
+    ];
+
+    const datasets = cuentas.map((cuenta, index) => ({
+        label: cuenta,
+        data: saldos.map(saldo => saldo[index]),
+        backgroundColor: colores[index % colores.length],
+        borderColor: colores[index % colores.length].replace('0.7', '1'),
+        borderWidth: 1
+    }));
+
+    const stackedBarConfig = {
+        type: 'bar',
+        data: {
+            labels: fechas,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Progresión de Saldo por Cuenta'
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true
+                },
+                y: {
+                    stacked: true
+                }
+            }
+        }
+    };
+
+    const stackedBarChart = new Chart(
+        document.getElementById('stackedBarChart'),
+        stackedBarConfig
+    );
+                                const csvData = {
+                    labels: {{ datos_csv | map(attribute=0) | list | tojson }},
+                    datasets: [
+                        {
+                            label: 'Saldo Total',
+                            data: {{ datos_csv | map(attribute=1) | list | tojson }},  // Cambiado aquí
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                };
+        const csvConfig = {
+            type: 'line',
+            data: csvData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Progreso de Saldos Capturados'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            },
+        };
+        const csvChart = new Chart(
+            document.getElementById('csvChart'),
+            csvConfig
+        );
+        const pieData = {
+            labels: {{ cuentas | map(attribute=0) | list | tojson }},
+            datasets: [{
+                data: {{ cuentas | map(attribute=1) | list | tojson }},
+                backgroundColor: colores,
+            }]
+        };
+        const pieConfig = {
+            type: 'pie',
+            data: pieData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Distribución de Saldos por Cuenta'
+                    }
+                }
+            },
+        };
+        const pieChart = new Chart(
+            document.getElementById('pieChart'),
+            pieConfig
+        );
+    
+        const barData = {
+            labels: {{ meses | tojson }},
+            datasets: [
+                {% for dataset in datasets %}
+                {
+                    label: '{{ dataset.label }}',
+                    data: {{ dataset.data | tojson }},
+                    backgroundColor: '{{ dataset.color }}'
+                },
+                {% endfor %}
+            ]
+        };
+        const barConfig = {
+            type: 'bar',
+            data: barData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Saldo Total Mes a Mes'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            },
+        };
+        const barChart = new Chart(
+            document.getElementById('barChart'),
+            barConfig
+        );
+    </script>
+    {% endblock %}
+</body>
+</html>
