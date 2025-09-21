@@ -9,7 +9,7 @@ import glob
 import sqlite3
 
 app = Flask(__name__)
-app.secret_key = 'cambia-esto-por-una-clave-secreta-segura'
+# app.secret_key = 'cambia-esto-por-una-clave-secreta-segura'
 
 # Conectar a la base de datos
 
@@ -320,4 +320,4 @@ def leer_csvs():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
