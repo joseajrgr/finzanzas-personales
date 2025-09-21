@@ -9,7 +9,7 @@ import glob
 import sqlite3
 
 app = Flask(__name__)
-# app.secret_key = 'cambia-esto-por-una-clave-secreta-segura'
+app.secret_key = os.environ.get("SECRET_KEY", "default-insecure-key")
 
 # Conectar a la base de datos
 
